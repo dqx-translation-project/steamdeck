@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# @description
 # interactive bash script that automates some steps and walks you through others
 # to install dqx and dqxclarity onto your steam deck.
 
