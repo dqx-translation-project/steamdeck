@@ -40,7 +40,7 @@ function check_kwrite() {
 while true; do
     CHOICE=$(whiptail \
         --title "DQX + dqxclarity install" \
-        --menu "Welcome to the dqxclarity installer. Choose an option using the arrow keys and select the option with enter." 17 58 9 \
+        --menu "Welcome! Use the arrow keys to select an option and press enter." 17 70 9 \
         "1" "Install DQX" \
         "2" "Install DQX expansions" \
         "3" "Install English launcher/config" \
@@ -389,26 +389,24 @@ while true; do
             echo "IF YOU HAVE ALREADY SET THIS UP IN STEAM, YOU DO NOT HAVE TO DO IT AGAIN!"
             echo "*****************************************************************"
             echo ""
-            echo "You're not done yet! You need to add the launch script to steam to launch dqxclarity and DQX together."
+            echo "You're not done yet! You need to add the launch script to Steam to launch dqxclarity and DQX together."
+            echo "For this, we'll update the the existing \"dqxinstaller_ft.exe\" game you added earlier."
             echo ""
-            echo "- Add a new non-steam game through Steam. Click "Browse" and navigate to this directory:"
-            echo ""
-            echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/"
-            echo ""
-            echo "- Under the \"Filter\" dropdown at the bottom select \"All Files\""
-            echo "- Select \"run.bat\" at the bottom and click \"Open\". Click \"Add Selected Programs\" to add it to your library"
-            echo "- Once the game is added, right-click it and select \"Properties...\""
-            echo "- At the top, give this shortcut a name, like: \"DQX+dqxclarity\""
+            echo "- Find \"dqxinstaller_ft.exe\" in your Steam library and right-click it"
+            echo "- Select \"Properties...\""
+            echo "- At the top of the window, replace \"dqxinstaller_ft.exe\" with \"DQX+dqxclarity\""
             echo "- Under \"TARGET\", paste the following as one line into the field:"
             echo ""
             echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/windows/system32/cmd.exe\" /C \"C:\users\steamuser\run.bat\""
+            echo ""
+            echo "- Under \"START IN\", paste the following as one line into the field:"
+            echo ""
+            echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/"
             echo ""
             echo "- Under \"LAUNCH OPTIONS\", paste the following as one line into the field:"
             echo ""
             echo "    STEAM_COMPAT_DATA_PATH=\"/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command%"
             echo ""
-            echo "- Select \"Compatability\" and check \"Force the use of a specific Steam Play compatability tool\""
-            echo "- Click the drop down and select \"Proton 9.0-4\" (or whatever version of Proton 9.0 is there)"
             echo "- Close out of the window"
             echo ""
             echo "This is now the shortcut you will launch every time you want to play the game."
@@ -420,19 +418,21 @@ while true; do
         8)
             wine_prefix=$(get_wine_prefix)
             dqx_directory="${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X/Game/Content/Data/data00000000.win32.dat0"
+            dqx_game_version=$(cat "${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X/Game/Game.ver")
             python_directory="${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/Python311-32/python.exe"
             dqxclarity_directory="${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/dqxclarity"
+            dqxclarity_version=$(cat "${dqxclarity_directory}/version.update")
 
             if [ -n "${wine_prefix}" ]; then
-                wine_prefix_status="PASS"
+                wine_prefix_status="PASS (ID: ${wine_prefix})"
             else
                 wine_prefix_status="FAIL"
             fi
 
             if [ -f "${dqx_directory}" ]; then
-                dqx_directory_status="PASS"
+                dqx_directory_status="PASS (Ver: ${dqx_game_version})"
             else
-                dqx_directory_status="FAIL"
+                dqx_directory_status="FAIL (Install or patch first)"
             fi
 
             if [ -f "${python_directory}" ]; then
@@ -442,14 +442,19 @@ while true; do
             fi
 
             if [ -d "${dqxclarity_directory}" ]; then
-                dqxclarity_directory_status="PASS"
+                dqxclarity_directory_status="PASS (Ver: ${dqxclarity_version})"
             else
                 dqxclarity_directory_status="FAIL"
             fi
 
+            results="wine prefix................${wine_prefix_status}\n"
+            results+="DQX directory..............${dqx_directory_status}\n"
+            results+="Python directory...........${python_directory_status}\n"
+            results+="dqxclarity directory.......${dqxclarity_directory_status}"
+
             whiptail \
                 --title "Validation Check" \
-                --msgbox "wine prefix.................${wine_prefix_status}\nDQX directory...............${dqx_directory_status}\nPython directory............${python_directory_status}\ndqxclarity directory........${dqxclarity_directory_status}" 10 50
+                --msgbox "${results}" 10 65
 
             continue
             ;;
