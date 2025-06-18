@@ -91,31 +91,23 @@ while true; do
 
             # while the user is setting up steam, we're going to scan the compatdata directory, which is where
             # the wine prefix folder will eventually get created after they click play to launch the game with proton.
-            watch_dir="/home/deck/.steam/steam/steamapps/compatdata"
-            declare -A seen_folders
+            watch_dir="${HOME}/.steam/steam/steamapps/compatdata"
 
-            # get all folders inside of watch_dir
-            while IFS= read -r -d '' folder; do
-                seen_folders["$(basename "${folder}")"]=1
-            done < <(find "$watch_dir" -mindepth 1 -maxdepth 1 -type d -print0)
+            # get initial list of folders
+            mapfile -t initial_folders < <(ls -1A "$watch_dir")
 
-            # scan for changes to the directory. we assume the first new folder we detect is our wine prefix folder.
             while true; do
-                while IFS= read -r -d '' folder; do
-                    base=$(basename "$folder")
-                    if [ -z "${seen_folders[${base}]}" ]; then
-                        wine_prefix="${base}"
+                sleep 1
+                mapfile -t current_folders < <(ls -1A "$watch_dir")
+                for folder in "${current_folders[@]}"; do
+                    if [[ ! " ${initial_folders[*]} " =~ " ${folder} " ]]; then
+                        wine_prefix="${folder}"
                         echo "Wine prefix folder detected: ${wine_prefix}"
-
-                        # store the wine_prefix id in the user's local config directory.
-                        # we'll use this as state if we ever need it.
                         mkdir -p "${HOME}/.config/dqxclarity"
                         echo "${wine_prefix}" > "${HOME}/.config/dqxclarity/wineprefix"
                         break 2
                     fi
-                done < <(find "$watch_dir" -mindepth 1 -maxdepth 1 -type d -print0)
-
-                sleep 1
+                done
             done
 
             clear
@@ -123,7 +115,7 @@ while true; do
                 --title "DQX Install" \
                 --msgbox "Go ahead and run through the DQX installer.\n\nDo not change the default install directory.\n\nPress enter AFTER you have finished the installation, closed the window and Steam no longer says the game is running." 13 75
 
-            dqx_install_path="/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X"
+            dqx_install_path="${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X"
 
             if [ ! -d "${dqx_install_path}" ]; then
                 whiptail --title "DQX Install Failed" --msgbox "DQX installation was not found. You will need to start this process over. Make sure you follow all instructions! \n\nDelete the non-steam games you added and try again." 11 60
@@ -141,7 +133,7 @@ while true; do
             echo "- Click \"Browse...\""
             echo "- Navigate to this path at the top:"
             echo ""
-            echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X/Boot"
+            echo "    ${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/SquareEnix/DRAGON QUEST X/Boot"
             echo ""
             echo "- Select \"DQXBoot.exe\""
             echo "- Click \"Add Selected Programs\""
@@ -193,7 +185,7 @@ while true; do
             echo "- At the top of this window, give the game a name like \"DQX Expansion Installers\""
             echo "- In the \"LAUNCH OPTIONS\" field, paste the following as one line:"
             echo ""
-            echo "    STEAM_COMPAT_DATA_PATH=\"/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command%"
+            echo "    STEAM_COMPAT_DATA_PATH=\"${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command%"
             echo ""
             echo "- Select \"Compatability\" and check \"Force the use of a specific Steam Play compatability tool\""
             echo "- Click the drop down and select \"Proton 9.0-4\" (or whatever version of Proton 9.0 is there)"
@@ -272,7 +264,7 @@ while true; do
             echo "- Once the game is added, right-click it and select \"Properties...\""
             echo "- Under \"LAUNCH OPTIONS\", paste the following as one line into the field:"
             echo ""
-            echo "    STEAM_COMPAT_DATA_PATH="/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}" %command% /passive InstallAllUsers=1 PrependPath=1 Include_doc=0 Include_tcltk=1 Include_test=0 Shortcuts=0"
+            echo "    STEAM_COMPAT_DATA_PATH=\"${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command% /passive InstallAllUsers=1 PrependPath=1 Include_doc=0 Include_tcltk=1 Include_test=0 Shortcuts=0"
             echo ""
             echo "- Select \"Compatability\" and check \"Force the use of a specific Steam Play compatability tool\""
             echo "- Click the drop down and select \"Proton 9.0-4\" (or whatever version of Proton 9.0 is there)"
@@ -282,7 +274,7 @@ while true; do
             echo ""
             read -p "After the installation is complete, press ENTER to validate the install."
 
-            if [ ! -f "/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/Python311-32/python.exe" ]; then
+            if [ ! -f "${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/Program Files (x86)/Python311-32/python.exe" ]; then
                 whiptail \
                     --title "Python Install Failed" \
                     --msgbox "Python installation was not found. Did it install successfully?" 11 60
@@ -366,7 +358,7 @@ while true; do
             fi
 
             # it is important to use tabs over spaces for indenting here. otherwise, <<- doesn't work.
-            cat <<-EOF > "/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/run.bat"
+            cat <<-EOF > "${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/run.bat"
 				@echo off
 				cd "C:\users\steamuser\dqxclarity"
 				if not exist venv (
@@ -397,17 +389,25 @@ while true; do
             echo "- At the top of the window, replace \"dqxinstaller_ft.exe\" with \"DQX+dqxclarity\""
             echo "- Under \"TARGET\", paste the following as one line into the field:"
             echo ""
-            echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/windows/system32/cmd.exe\" /C \"C:\users\steamuser\run.bat\""
+            echo "    ${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/windows/system32/cmd.exe\" /C \"C:\users\steamuser\run.bat\""
             echo ""
             echo "- Under \"START IN\", paste the following as one line into the field:"
             echo ""
-            echo "    /home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/"
+            echo "    ${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/"
             echo ""
             echo "- Under \"LAUNCH OPTIONS\", paste the following as one line into the field:"
             echo ""
-            echo "    STEAM_COMPAT_DATA_PATH=\"/home/deck/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command%"
+            echo "    STEAM_COMPAT_DATA_PATH=\"${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}\" %command%"
             echo ""
             echo "- Close out of the window"
+            echo ""
+            echo "This next part feels redundant, but is a Steam quirk. Don't skip this or the game won't launch."
+            echo ""
+            echo "- Right-click \"DQX+dqxclarity\" again and select \"Properties...\""
+            echo "- Click \"Browse...\" next to \"TARGET\""
+            echo "- On the \"Filter\" section at the bottom, click the drop down and select \"All Files\""
+            echo "- Select \"run.bat\" and click \"Open\""
+            echo "- Close the window"
             echo ""
             echo "This is now the shortcut you will launch every time you want to play the game."
             echo "This will launch both dqxclarity and dqxboot at the same time."
