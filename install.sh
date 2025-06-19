@@ -320,6 +320,14 @@ while true; do
             ;;
         # edit user_settings.ini
         6)
+            wine_prefix=$(get_wine_prefix)
+            if [ -z "${wine_prefix}" ]; then
+                whiptail \
+                    --title "dqxclarity Install" \
+                    --msgbox "Wine prefix not found. Please install DQX first." 8 50
+                continue
+            fi
+
             user_settings_file="${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/dqxclarity/user_settings.ini"
             if [ ! -f "${user_settings_file}" ]; then
                 whiptail \
