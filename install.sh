@@ -373,7 +373,7 @@ while true; do
 				@echo off
 				if not exist C:\users\steamuser\dqxclarity\venv (
 					echo Installing requirements. This may take a minute.
-					C:\users\steamuser\dqxclarity\python -m venv C:\users\steamuser\dqxclarity\venv
+					python -m venv C:\users\steamuser\dqxclarity\venv
 					C:\users\steamuser\dqxclarity\venv\Scripts\python.exe -m pip install -r C:\users\steamuser\dqxclarity\requirements.txt
 				)
 				start "" C:\users\steamuser\dqxclarity\venv\Scripts\python.exe C:\users\steamuser\dqxclarity\main.py ${concat_choices}
