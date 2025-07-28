@@ -366,17 +366,18 @@ while true; do
             fi
 
             # it is important to use tabs over spaces for indenting here. otherwise, <<- doesn't work.
-            #
-            # we use the full path to the files versus changing directories as it was observed that users using a custom
-            # path when mounting/installing on an SD card cannot use cd in the command prompt when navigating to C:\.
+            # we also make sure we're on the C:\ drive before running any cd commands. some users have installed
+            # apps on an sd card.
             cat <<-EOF > "${HOME}/.steam/steam/steamapps/compatdata/${wine_prefix}/pfx/drive_c/users/steamuser/run.bat"
 				@echo off
-				if not exist C:\users\steamuser\dqxclarity\venv (
+                C: cd
+				cd "C:\users\steamuser\dqxclarity"
+				if not exist venv (
 					echo Installing requirements. This may take a minute.
-					python -m venv C:\users\steamuser\dqxclarity\venv
-					C:\users\steamuser\dqxclarity\venv\Scripts\python.exe -m pip install -r C:\users\steamuser\dqxclarity\requirements.txt
+					python -m venv venv
+					.\venv\Scripts\python.exe -m pip install -r requirements.txt
 				)
-				start "" C:\users\steamuser\dqxclarity\venv\Scripts\python.exe C:\users\steamuser\dqxclarity\main.py ${concat_choices}
+				start "" .\venv\Scripts\python.exe main.py ${concat_choices}
 				start "" "C:\Program Files (x86)\SquareEnix\DRAGON QUEST X\Boot\DQXBoot.exe"
 			EOF
 
